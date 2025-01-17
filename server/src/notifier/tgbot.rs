@@ -21,7 +21,7 @@ pub struct Config {
     pub online_tpl: String,
     pub offline_tpl: String,
     pub custom_tpl: String,
-    pub topic_id: String,
+    pub message_thread_id: String,
 }
 
 pub struct TGBot {
