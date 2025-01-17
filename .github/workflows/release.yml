@@ -330,6 +330,9 @@ jobs:
 
       # https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
       # https://github.com/cross-rs/cross/issues/1222
+      - name : Install clang
+        run: |
+          sudo apt-get install clang libclang-dev -y
       - name: Update Cross
         uses: actions-rs/cargo@v1
         with:
@@ -341,7 +344,7 @@ jobs:
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
-          args: --locked --release --target=${{ matrix.platform.target }} ${{ matrix.platform.cargo-flags }}
+          args: --locked --release --target=${{ matrix.platform.target }}  --features bindgen ${{ matrix.platform.cargo-flags }}
 
       - name: Strip (MacOS/Window)
         if: matrix.platform.os != 'ubuntu-latest'
