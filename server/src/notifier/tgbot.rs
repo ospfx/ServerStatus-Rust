@@ -21,7 +21,7 @@ pub struct Config {
     pub online_tpl: String,
     pub offline_tpl: String,
     pub custom_tpl: String,
-    pub topic_id: Option<i64>,
+    pub topic_id: String,
 }
 
 pub struct TGBot {
@@ -53,13 +53,11 @@ impl crate::notifier::Notifier for TGBot {
 
     fn send_notify(&self, html_content: String) -> Result<()> {
         let mut data = HashMap::new();
+        
         data.insert("chat_id", self.config.chat_id.to_string());
+        data.insert("topic_id", self.config.topic_id.to_string());
         data.insert("parse_mode", "HTML".to_string());
         data.insert("text", html_content);
-
-        if let Some(topic_id) = self.config.topic_id {
-            data.insert("message_thread_id", topic_id.to_string());
-        }
 
         let tg_url = self.tg_url.to_string();
         let handle = NOTIFIER_HANDLE.lock().unwrap().as_ref().unwrap().clone();
