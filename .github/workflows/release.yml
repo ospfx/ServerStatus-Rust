@@ -336,7 +336,8 @@ jobs:
           command: install
           use-cross: false
           args: cross --git https://github.com/cross-rs/cross
-
+      - name: Install dependencies
+        run: apt-get install -y clang
       - name: Build release
         uses: actions-rs/cargo@v1
         with:
