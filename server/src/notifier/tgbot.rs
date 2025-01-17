@@ -55,7 +55,7 @@ impl crate::notifier::Notifier for TGBot {
         let mut data = HashMap::new();
         
         data.insert("chat_id", self.config.chat_id.to_string());
-        data.insert("topic_id", self.config.topic_id.to_string());
+        data.insert("message_thread_id", self.config.message_thread_id.to_string());
         data.insert("parse_mode", "HTML".to_string());
         data.insert("text", html_content);
 
