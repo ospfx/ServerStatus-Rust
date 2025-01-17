@@ -279,6 +279,8 @@ notify_interval = 30
 enabled = false
 bot_token = "<tg bot token>"
 chat_id = "<chat id>"
+#message_thread_id是tg超级群组的话题id
+message_thread_id= "<thread_id>"
 # host 可用字段见 payload.rs 文件 HostStat 结构, {{host.xxx}} 为占位变量
 # 例如 host.name 可替换为 host.alias，大家根据自己的喜好来编写通知消息
 # {{ip_info.query}} 主机 ip,  {{sys_info.host_name}} 主机 hostname
