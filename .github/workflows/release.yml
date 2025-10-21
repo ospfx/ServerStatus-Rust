@@ -49,7 +49,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-macos
           path: target/wheels/stat*.whl
           if-no-files-found: error
 
@@ -191,7 +191,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-linux
           path: target/wheels/stat*.whl
           if-no-files-found: error
       - name: Upload deb artifacts
