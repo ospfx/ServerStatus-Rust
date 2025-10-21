@@ -138,6 +138,11 @@ jobs:
       image: docker://ghcr.io/rust-cross/rust-musl-cross:${{ matrix.platform.target }}
     steps:
       - uses: actions/checkout@v4
+      - name: Clean Rust cache #解决工具链安装失败问题
+        run: |
+          rm -rf /root/.cargo/registry
+          rm -rf /root/.cargo/git
+          rm -rf /root/.rustup
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
