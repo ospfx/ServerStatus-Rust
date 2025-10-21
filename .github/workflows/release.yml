@@ -337,6 +337,10 @@ jobs:
           use-cross: false
           args: cross --git https://github.com/cross-rs/cross
 
+      - name: Clean cross cache
+        run: |
+          cross clean  # 清理项目构建缓存
+          rm -rf ~/.cache/cross  # 清理 cross 全局缓存
       - name: Build release
         uses: actions-rs/cargo@v1
         with:
