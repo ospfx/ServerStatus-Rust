@@ -337,10 +337,11 @@ jobs:
           use-cross: false
           args: cross --git https://github.com/cross-rs/cross
 
-      - name: Clean cross cache
+      - name: Install bindgen dependencies
+        if: contains(matrix.platform.target, 'android')  # 仅针对 Android 目标
         run: |
-          cross clean  # 清理项目构建缓存
-          rm -rf ~/.cache/cross  # 清理 cross 全局缓存
+          sudo apt-get update
+          sudo apt-get install -y clang libclang-dev  # 安装 libclang，供 bindgen 使用
       - name: Build release
         uses: actions-rs/cargo@v1
         with:
