@@ -37,8 +37,8 @@ impl ServerStatus for ServerStatusSrv {
         }))
     }
 }
-
-fn check_auth(req: Request<()>) -> Result<Request<()>, Box<Status>> {
+#[allow(clippy::result_large_err)]
+fn check_auth(req: Request<()>) -> Result<Request<()>, Status> {
     let mut group_auth = false;
     req.metadata().get("ssr-auth").map(|v| {
         v.to_str().map(|s| {
@@ -62,10 +62,10 @@ fn check_auth(req: Request<()>) -> Result<Request<()>, Box<Status>> {
                 }
             }
 
-            Err(Box::new(Status::unauthenticated("invalid user/group && pass")))
+            Err(Status::unauthenticated("invalid user/group && pass"))
         }
 
-        _ => Err(Box::new(Status::unauthenticated("invalid user/group && pass"))),
+        _ => Err(Status::unauthenticated("invalid user/group && pass")),
     }
 }
 
