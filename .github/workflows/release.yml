@@ -372,7 +372,19 @@ jobs:
             clang \
             libclang-dev \
             ca-certificates \
-            gnupg2
+            clang \
+            libclang-dev \
+            ca-certificates \
+            gnupg2 \
+            nasm \
+            perl \
+            build-essential \
+            wget
+          
+          # 添加Kitware仓库以获取更新版本的CMake
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+          echo "deb https://apt.kitware.com/ubuntu/ bionic main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+
           
           # 添加Ubuntu Bionic ports仓库并导入GPG密钥
           echo "deb http://ports.ubuntu.com/ubuntu-ports bionic universe" | sudo tee /etc/apt/sources.list.d/arm-musleabihf.list
@@ -383,6 +395,7 @@ jobs:
           # 更新并安装预编译的musleabihf交叉编译工具链
           sudo apt-get update -o Acquire::AllowInsecureRepositories=true
           sudo apt-get install -y -o APT::AllowUnauthenticated=true \
+            cmake \
             gcc-arm-linux-musleabihf \
             g++-arm-linux-musleabihf \
             binutils-arm-linux-musleabihf \
@@ -438,7 +451,13 @@ jobs:
           # 针对aws-lc-rs的特定配置
           AWS_LC_RS_SYSROOT: /usr/arm-linux-musleabihf
           AWS_LC_RS_TARGET: armv7-unknown-linux-musleabihf
-          
+          # 帮助aws-lc-sys找到正确的工具链
+          CMAKE_TOOLCHAIN_FILE: /usr/share/cmake-3.10/Modules/CMakeForceCompiler.cmake
+          CMAKE_C_COMPILER: arm-linux-musleabihf-gcc
+          CMAKE_CXX_COMPILER: arm-linux-musleabihf-g++
+          CMAKE_SYSROOT: /usr/arm-linux-musleabihf
+          # 禁用汇编优化（如果NASM仍然有问题）
+          # AWS_LC_SYS_NO_ASM: 1
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
