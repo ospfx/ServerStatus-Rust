@@ -300,6 +300,9 @@ jobs:
             suffix: ""
             use-cross: true
             cargo-flags: ""
+            setup-cc: true
+            cc: arm-linux-musleabihf-gcc
+            cxx: arm-linux-musleabihf-g++
 
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -355,6 +358,29 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang libclang-dev  # 安装 libclang，供 bindgen 使用
+
+      - name: Install armv7-musl toolchain and dependencies
+        if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-arm-linux-gnueabihf \
+            g++-arm-linux-gnueabihf \
+            musl-tools \
+            cmake \
+            clang \
+            libclang-dev
+          # 安装bindgen-cli
+          cargo install --force --locked bindgen-cli
+      
+      - name: Set compiler for armv7-musl
+        if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
+        run: |
+          echo "CC_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-gcc" >> $GITHUB_ENV
+          echo "CXX_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-g++" >> $GITHUB_ENV
+          echo "AR_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ar" >> $GITHUB_ENV
+          echo "RANLIB_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ranlib" >> $GITHUB_ENV
+      
       - name: Build release
         uses: actions-rs/cargo@v1
         env:
@@ -364,6 +390,13 @@ jobs:
           # 告诉 bindgen 目标平台的系统头文件路径（Android NDK 提供）
           BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android: >
             --sysroot=${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/sysroot
+          # 针对armv7-unknown-linux-musleabihf的bindgen参数
+          BINDGEN_EXTRA_CLANG_ARGS_armv7_unknown_linux_musleabihf: >
+            --sysroot=/usr/arm-linux-gnueabihf
+            -target armv7-unknown-linux-musleabihf
+            -march=armv7-a
+            -mfpu=vfpv3-d16
+            -mfloat-abi=hard
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
