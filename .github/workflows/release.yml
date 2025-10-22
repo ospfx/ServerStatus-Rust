@@ -369,17 +369,32 @@ jobs:
             musl-tools \
             cmake \
             clang \
-            libclang-dev
+            libclang-dev \
+            binutils-arm-linux-gnueabihf \
+            libc6-armhf-cross \
+            libc6-dev-armhf-cross
+          # 安装musl交叉编译工具链
+          git clone https://github.com/richfelker/musl-cross-make.git
+          cd musl-cross-make
+          echo "TARGET=arm-linux-musleabihf" > config.mak
+          echo "OUTPUT=/usr/local/arm-linux-musleabihf" >> config.mak
+          make -j$(nproc)
+          sudo make install
+          cd ..
+          rm -rf musl-cross-make
           # 安装bindgen-cli
           cargo install --force --locked bindgen-cli
       
       - name: Set compiler for armv7-musl
         if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
         run: |
-          echo "CC_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-gcc" >> $GITHUB_ENV
-          echo "CXX_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-g++" >> $GITHUB_ENV
-          echo "AR_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ar" >> $GITHUB_ENV
-          echo "RANLIB_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ranlib" >> $GITHUB_ENV
+          echo "CC_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-gcc" >> $GITHUB_ENV
+          echo "CXX_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-g++" >> $GITHUB_ENV
+          echo "AR_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-ar" >> $GITHUB_ENV
+          echo "RANLIB_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-ranlib" >> $GITHUB_ENV
+          echo "LD_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-ld" >> $GITHUB_ENV
+          # 添加工具链到PATH
+          echo "/usr/local/arm-linux-musleabihf/bin" >> $GITHUB_PATH
       
       - name: Build release
         uses: actions-rs/cargo@v1
@@ -392,15 +407,22 @@ jobs:
             --sysroot=${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/sysroot
           # 针对armv7-unknown-linux-musleabihf的bindgen参数
           BINDGEN_EXTRA_CLANG_ARGS_armv7_unknown_linux_musleabihf: >
-            --sysroot=/usr/arm-linux-gnueabihf
+            --sysroot=/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot
             -target armv7-unknown-linux-musleabihf
             -march=armv7-a
             -mfpu=vfpv3-d16
             -mfloat-abi=hard
+            -I/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/include
+          # 针对aws-lc-rs的特定配置
+          AWS_LC_RS_SYSROOT: /usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot
+          AWS_LC_RS_TARGET: armv7-unknown-linux-musleabihf
+          
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
           args: --locked --release --target=${{ matrix.platform.target }} ${{ matrix.platform.cargo-flags }}
+          # 针对armv7-unknown-linux-musleabihf添加额外的链接器参数
+          extra-args: "-C linker=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-gcc -C link-arg=--sysroot=/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot"
 
       - name: Strip (MacOS/Window)
         if: matrix.platform.os != 'ubuntu-latest'
