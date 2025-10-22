@@ -303,7 +303,7 @@ jobs:
             setup-cc: true
             cc: arm-linux-musleabihf-gcc
             cxx: arm-linux-musleabihf-g++
-            extra-args: "-C linker=arm-linux-musleabihf-gcc -C link-arg=--sysroot=/usr/arm-linux-musleabihf"
+            extra-args: "--no-default-features --features stat_client/native"
 
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -360,40 +360,63 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang libclang-dev  # 安装 libclang，供 bindgen 使用
 
-      - name: Install armv7-musl toolchain and dependencies
+      # 针对armv7-unknown-linux-musleabihf的特定步骤
+      - name: Install armv7-musleabihf toolchain and dependencies
         if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
         run: |
+          # 安装基础依赖
           sudo apt-get update
           sudo apt-get install -y \
-            gcc-arm-linux-gnueabihf \
-            g++-arm-linux-gnueabihf \
             musl-tools \
             cmake \
             clang \
             libclang-dev \
-            binutils-arm-linux-gnueabihf \
-            libc6-armhf-cross \
-            libc6-dev-armhf-cross
-          # 添加arm-linux-musleabihf工具链仓库（使用Ubuntu的ports仓库）
-          echo "deb http://ports.ubuntu.com/ubuntu-ports bionic universe" | sudo tee /etc/apt/sources.list.d/arm-musl.list
-          sudo apt-get update
-          # 安装预编译的musl交叉编译工具链
-          sudo apt-get install -y \
+            ca-certificates \
+            gnupg2
+          
+          # 添加Ubuntu Bionic ports仓库并导入GPG密钥
+          echo "deb http://ports.ubuntu.com/ubuntu-ports bionic universe" | sudo tee /etc/apt/sources.list.d/arm-musleabihf.list
+          
+          # 导入Ubuntu Bionic的GPG密钥
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+          
+          # 更新并安装预编译的musleabihf交叉编译工具链
+          sudo apt-get update -o Acquire::AllowInsecureRepositories=true
+          sudo apt-get install -y -o APT::AllowUnauthenticated=true \
             gcc-arm-linux-musleabihf \
             g++-arm-linux-musleabihf \
+            binutils-arm-linux-musleabihf \
+            libc6-armhf-cross \
+            libc6-dev-armhf-cross \
             libc6-dev-arm-linux-musleabihf-cross
+          
           # 安装bindgen-cli
           cargo install --force --locked bindgen-cli
       
       # 针对armv7-unknown-linux-musleabihf设置编译器
-      - name: Set compiler for armv7-musl
+      - name: Set compiler for armv7-musleabihf
         if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
         run: |
+          # 设置交叉编译工具链环境变量
           echo "CC_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-gcc" >> $GITHUB_ENV
           echo "CXX_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-g++" >> $GITHUB_ENV
           echo "AR_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ar" >> $GITHUB_ENV
           echo "RANLIB_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ranlib" >> $GITHUB_ENV
           echo "LD_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ld" >> $GITHUB_ENV
+          
+          # 设置Cargo配置文件
+          mkdir -p .cargo
+          cat > .cargo/config << 'EOF'
+          [target.armv7-unknown-linux-musleabihf]
+          linker = "arm-linux-musleabihf-gcc"
+          ar = "arm-linux-musleabihf-ar"
+          rustflags = [
+            "-C", "link-arg=--sysroot=/usr/arm-linux-musleabihf",
+            "-C", "link-arg=-Wl,-rpath-link,/usr/arm-linux-musleabihf/lib",
+            "-C", "target-cpu=cortex-a7",
+            "-C", "linker=arm-linux-musleabihf-gcc"
+          ]
+          EOF
       
       - name: Build release
         uses: actions-rs/cargo@v1
