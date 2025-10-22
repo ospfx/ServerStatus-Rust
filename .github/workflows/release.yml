@@ -191,7 +191,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux
+          name: wheels-linux-${{ matrix.platform.target }}
           path: target/wheels/stat*.whl
           if-no-files-found: error
       - name: Upload deb artifacts
