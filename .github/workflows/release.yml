@@ -374,11 +374,8 @@ jobs:
             binutils-arm-linux-gnueabihf \
             libc6-armhf-cross \
             libc6-dev-armhf-cross
-          # 添加arm-linux-musleabihf工具链仓库
-          echo "deb http://deb.debian.org/debian stretch main" | sudo tee /etc/apt/sources.list.d/stretch.list
-          echo "Package: *" | sudo tee /etc/apt/preferences.d/stretch.pref
-          echo "Pin: release n=stretch" | sudo tee -a /etc/apt/preferences.d/stretch.pref
-          echo "Pin-Priority: 100" | sudo tee -a /etc/apt/preferences.d/stretch.pref
+          # 添加arm-linux-musleabihf工具链仓库（使用Ubuntu的ports仓库）
+          echo "deb http://ports.ubuntu.com/ubuntu-ports bionic universe" | sudo tee /etc/apt/sources.list.d/arm-musl.list
           sudo apt-get update
           # 安装预编译的musl交叉编译工具链
           sudo apt-get install -y \
