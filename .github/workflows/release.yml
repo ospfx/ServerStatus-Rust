@@ -303,6 +303,7 @@ jobs:
             setup-cc: true
             cc: arm-linux-musleabihf-gcc
             cxx: arm-linux-musleabihf-g++
+            extra-args: "-C linker=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-gcc -C link-arg=--sysroot=/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot"
 
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -420,10 +421,9 @@ jobs:
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
-          args: --locked --release --target=${{ matrix.platform.target }} ${{ matrix.platform.cargo-flags }}
-          # 针对armv7-unknown-linux-musleabihf添加额外的链接器参数
-          extra-args: "-C linker=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-gcc -C link-arg=--sysroot=/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot"
-
+          args: --locked --release --target=${{ matrix.platform.target }} ${{ matrix.platform.cargo-flags }} ${{ matrix.platform.extra-args }}
+          
+          
       - name: Strip (MacOS/Window)
         if: matrix.platform.os != 'ubuntu-latest'
         continue-on-error: true
