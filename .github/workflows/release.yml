@@ -328,6 +328,19 @@ jobs:
           version: "3.x"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Android NDK
+        if: contains(matrix.platform.target, 'android')
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+          add-to-path: true
+
+      - name: Set Android NDK environment variables
+        if: contains(matrix.platform.target, 'android')
+        run: |
+          echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+          echo "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+
       # https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
       # https://github.com/cross-rs/cross/issues/1222
       - name: Update Cross
@@ -344,6 +357,13 @@ jobs:
           sudo apt-get install -y clang libclang-dev  # 安装 libclang，供 bindgen 使用
       - name: Build release
         uses: actions-rs/cargo@v1
+        env:
+          # 启用 bindgen 所需的 clang 路径（Android NDK 中的 clang）
+          CC_aarch64_linux_android: aarch64-linux-android21-clang  # 适配 Android API 21+
+          CXX_aarch64_linux_android: aarch64-linux-android21-clang++
+          # 告诉 bindgen 目标平台的系统头文件路径（Android NDK 提供）
+          BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android: >
+            --sysroot=${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/sysroot
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
