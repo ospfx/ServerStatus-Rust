@@ -367,7 +367,7 @@ jobs:
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
-          args: --locked --release --target=${{ matrix.platform.target }} ${{ matrix.platform.cargo-flags }} --features aws-lc-sys/bindgen
+          args: --locked --release --target=${{ matrix.platform.target }} ${{ matrix.platform.cargo-flags }}
 
       - name: Strip (MacOS/Window)
         if: matrix.platform.os != 'ubuntu-latest'
