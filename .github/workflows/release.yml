@@ -303,7 +303,7 @@ jobs:
             setup-cc: true
             cc: arm-linux-musleabihf-gcc
             cxx: arm-linux-musleabihf-g++
-            extra-args: "-C linker=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-gcc -C link-arg=--sysroot=/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot"
+            extra-args: "-C linker=arm-linux-musleabihf-gcc -C link-arg=--sysroot=/usr/arm-linux-musleabihf"
 
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -374,28 +374,29 @@ jobs:
             binutils-arm-linux-gnueabihf \
             libc6-armhf-cross \
             libc6-dev-armhf-cross
-          # 安装musl交叉编译工具链
-          git clone https://github.com/richfelker/musl-cross-make.git
-          cd musl-cross-make
-          echo "TARGET=arm-linux-musleabihf" > config.mak
-          echo "OUTPUT=/usr/local/arm-linux-musleabihf" >> config.mak
-          make -j$(nproc)
-          sudo make install
-          cd ..
-          rm -rf musl-cross-make
+          # 添加arm-linux-musleabihf工具链仓库
+          echo "deb http://deb.debian.org/debian stretch main" | sudo tee /etc/apt/sources.list.d/stretch.list
+          echo "Package: *" | sudo tee /etc/apt/preferences.d/stretch.pref
+          echo "Pin: release n=stretch" | sudo tee -a /etc/apt/preferences.d/stretch.pref
+          echo "Pin-Priority: 100" | sudo tee -a /etc/apt/preferences.d/stretch.pref
+          sudo apt-get update
+          # 安装预编译的musl交叉编译工具链
+          sudo apt-get install -y \
+            gcc-arm-linux-musleabihf \
+            g++-arm-linux-musleabihf \
+            libc6-dev-arm-linux-musleabihf-cross
           # 安装bindgen-cli
           cargo install --force --locked bindgen-cli
       
+      # 针对armv7-unknown-linux-musleabihf设置编译器
       - name: Set compiler for armv7-musl
         if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
         run: |
-          echo "CC_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-gcc" >> $GITHUB_ENV
-          echo "CXX_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-g++" >> $GITHUB_ENV
-          echo "AR_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-ar" >> $GITHUB_ENV
-          echo "RANLIB_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-ranlib" >> $GITHUB_ENV
-          echo "LD_armv7_unknown_linux_musleabihf=/usr/local/arm-linux-musleabihf/bin/arm-linux-musleabihf-ld" >> $GITHUB_ENV
-          # 添加工具链到PATH
-          echo "/usr/local/arm-linux-musleabihf/bin" >> $GITHUB_PATH
+          echo "CC_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-gcc" >> $GITHUB_ENV
+          echo "CXX_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-g++" >> $GITHUB_ENV
+          echo "AR_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ar" >> $GITHUB_ENV
+          echo "RANLIB_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ranlib" >> $GITHUB_ENV
+          echo "LD_armv7_unknown_linux_musleabihf=arm-linux-musleabihf-ld" >> $GITHUB_ENV
       
       - name: Build release
         uses: actions-rs/cargo@v1
@@ -408,14 +409,14 @@ jobs:
             --sysroot=${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/sysroot
           # 针对armv7-unknown-linux-musleabihf的bindgen参数
           BINDGEN_EXTRA_CLANG_ARGS_armv7_unknown_linux_musleabihf: >
-            --sysroot=/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot
+            --sysroot=/usr/arm-linux-musleabihf
             -target armv7-unknown-linux-musleabihf
             -march=armv7-a
             -mfpu=vfpv3-d16
             -mfloat-abi=hard
-            -I/usr/local/arm-linux-musleabihf/arm-linux-musleabihf/include
+            -I/usr/arm-linux-musleabihf/include
           # 针对aws-lc-rs的特定配置
-          AWS_LC_RS_SYSROOT: /usr/local/arm-linux-musleabihf/arm-linux-musleabihf/sysroot
+          AWS_LC_RS_SYSROOT: /usr/arm-linux-musleabihf
           AWS_LC_RS_TARGET: armv7-unknown-linux-musleabihf
           
         with:
