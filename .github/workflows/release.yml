@@ -379,7 +379,13 @@ jobs:
             nasm \
             perl \
             build-essential \
-            wget
+            wget \
+            gcc-arm-linux-gnueabihf \
+            g++-arm-linux-gnueabihf \
+            libc6-armhf-cross \
+            libc6-dev-armhf-cross \
+            libstdc++6-armhf-cross \
+            libstdc++-8-dev-armhf-cross
           
           # 添加Kitware仓库以获取更新版本的CMake
           wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
@@ -427,7 +433,8 @@ jobs:
             "-C", "link-arg=--sysroot=/usr/arm-linux-musleabihf",
             "-C", "link-arg=-Wl,-rpath-link,/usr/arm-linux-musleabihf/lib",
             "-C", "target-cpu=cortex-a7",
-            "-C", "linker=arm-linux-musleabihf-gcc"
+            "-C", "linker=arm-linux-musleabihf-gcc",
+            "-C", "opt-level=2"
           ]
           EOF
       
@@ -457,7 +464,9 @@ jobs:
           CMAKE_CXX_COMPILER: arm-linux-musleabihf-g++
           CMAKE_SYSROOT: /usr/arm-linux-musleabihf
           # 禁用汇编优化（如果NASM仍然有问题）
-          # AWS_LC_SYS_NO_ASM: 1
+          AWS_LC_SYS_NO_ASM: 1
+          # 降低优化级别
+          RUSTFLAGS: "-C opt-level=2"
         with:
           command: build
           use-cross: ${{ matrix.platform.use-cross }}
