@@ -354,12 +354,13 @@ jobs:
           use-cross: false
           args: cross --git https://github.com/cross-rs/cross
 
+      # 安装bindgen依赖
       - name: Install bindgen dependencies
-        if: contains(matrix.platform.target, 'android')  # 仅针对 Android 目标
+        if: contains(matrix.platform.target, 'android')
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang libclang-dev  # 安装 libclang，供 bindgen 使用
-
+          sudo apt-get install -y clang libclang-dev
+          cargo install --force --locked bindgen-cli
       # 针对armv7-unknown-linux-musleabihf的特定步骤
       - name: Install armv7-musleabihf toolchain and dependencies
         if: matrix.platform.target == 'armv7-unknown-linux-musleabihf'
